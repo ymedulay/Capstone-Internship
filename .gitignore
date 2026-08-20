@@ -1,0 +1,32 @@
+# ==========================================
+# Terraform Exclusions
+# ==========================================
+
+# Ignore the local .terraform directory (contains provider binaries and modules)
+# These are huge and should be re-downloaded via 'terraform init'
+.terraform/
+**/.terraform/*
+
+# Ignore all terraform state files and their backups
+# These contain sensitive infrastructure data and should not be in version control
+*.tfstate
+*.tfstate.*
+*.backup
+
+# Ignore the dependency lock file
+# (Optional: Some teams keep this, but for bootcamps, it's often cleaner to ignore)
+.terraform.lock.hcl
+
+# Ignore crash logs
+crash.log
+
+# ==========================================
+# System & IDE Exclusions
+# ==========================================
+
+# MacOS system files
+.DS_Store
+
+# Visual Studio Code settings
+.vscode/
+
