@@ -26,6 +26,8 @@ The infrastructure is designed with strict perimeter security, enforcing least p
 ├── README.md             # Project documentation
 └── terraform.tfvars      # Environment-specific variable assignments
 
+```
+
 ## Security & Networking
 The network traffic is heavily regulated to prevent direct internet access to instances and to secure the administrative paths:
 
@@ -33,3 +35,61 @@ Bastion Host: Accessible only via SSH from the designated vpn_ip.
 Application Load Balancer (ALB): The only public-facing entry point (HTTP/80) to the application.
 Frontend ASG: Only accepts HTTP traffic that has passed through the ALB, and SSH traffic from the Bastion.
 Backend ASG: Isolated in private subnets. Only accepts HTTP traffic from the VPC CIDR (for internal NLB routing and health checks) and SSH traffic from the Bastion.
+
+
+## Mandatory Tagging Standards
+All resources deployed through this configuration are automatically tagged using local variables. The module automatically merges base tags with dynamically generated tags:
+
+Name: {Lastname}-FinalProject-{ResourceType}
+Engineer: {Lastname}-{Firstname}
+ProjectCode: Terraform101-CloudIntern
+
+## Getting Started
+Prerequisites
+Terraform v1.14.3 or higher.
+AWS CLI configured with appropriate credentials.
+An existing S3 bucket (dulay-finalproject-terraform-state) initialized for remote state with versioning enabled.
+
+## Configuration Setup
+Before initializing Terraform, create or update your terraform.tfvars file in the root directory. You must replace the placeholder VPN IP with your actual IP address to ensure secure SSH access to the Bastion Host.
+
+**Security Note: Never commit your actual VPN IP to version control.**
+```text
+region = "ap-southeast-1"
+vpn_ip = "YOUR_VPN_IP/32" # Replace with your actual IP address
+
+common_tags = {
+  "ProjectCode" = "Terraform101-CloudIntern"
+}
+```
+
+## Deployment Steps
+
+```text
+1.  **Bootstrap the Remote Backend:**
+    Before deploying the main infrastructure, you must create the S3 bucket for remote state storage. Navigate to the bootstrap directory and apply the initial configuration:
+    ```bash
+    cd bootstrap
+    terraform init
+    terraform apply
+    cd ..
+    ```
+
+2.  **Initialize Main Infrastructure:**
+    From the root directory, initialize Terraform to download providers and configure the S3 backend using the bucket you just created.
+    ```bash
+    terraform init
+    ```
+
+3.  **Plan Infrastructure:**
+    Review the execution plan to verify resource creation, modular connections, and tagging.
+    ```bash
+    terraform plan
+    ```
+
+4.  **Apply Configuration:**
+    Provision the AWS resources for the 3-tier architecture.
+    ```bash
+    terraform apply
+    ```
+```
