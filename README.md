@@ -31,10 +31,10 @@ The infrastructure is designed with strict perimeter security, enforcing least p
 ## Security & Networking
 The network traffic is heavily regulated to prevent direct internet access to instances and to secure the administrative paths:
 
-Bastion Host: Accessible only via SSH from the designated vpn_ip.
-Application Load Balancer (ALB): The only public-facing entry point (HTTP/80) to the application.
-Frontend ASG: Only accepts HTTP traffic that has passed through the ALB, and SSH traffic from the Bastion.
-Backend ASG: Isolated in private subnets. Only accepts HTTP traffic from the VPC CIDR (for internal NLB routing and health checks) and SSH traffic from the Bastion.
+- Bastion Host: Accessible only via SSH from the designated vpn_ip.
+- Application Load Balancer (ALB): The only public-facing entry point (HTTP/80) to the application.
+- Frontend ASG: Only accepts HTTP traffic that has passed through the ALB, and SSH traffic from the Bastion.
+- Backend ASG: Isolated in private subnets. Only accepts HTTP traffic from the VPC CIDR (for internal NLB routing and health checks) and SSH traffic from the Bastion.
 
 
 ## Mandatory Tagging Standards
@@ -46,9 +46,9 @@ ProjectCode: Terraform101-CloudIntern
 
 ## Getting Started
 Prerequisites
-Terraform v1.14.3 or higher.
-AWS CLI configured with appropriate credentials.
-An existing S3 bucket (dulay-finalproject-terraform-state) initialized for remote state with versioning enabled.
+- Terraform v1.14.3 or higher.
+- AWS CLI configured with appropriate credentials.
+- An existing S3 bucket (example-terraform-state) initialized for remote state with versioning enabled.
 
 ## Configuration Setup
 Before initializing Terraform, create or update your terraform.tfvars file in the root directory. You must replace the placeholder VPN IP with your actual IP address to ensure secure SSH access to the Bastion Host.
