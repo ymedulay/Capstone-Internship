@@ -40,9 +40,9 @@ The network traffic is heavily regulated to prevent direct internet access to in
 ## Mandatory Tagging Standards
 All resources deployed through this configuration are automatically tagged using local variables. The module automatically merges base tags with dynamically generated tags:
 
-Name: {Lastname}-FinalProject-{ResourceType}
-Engineer: {Lastname}-{Firstname}
-ProjectCode: Terraform101-CloudIntern
+- Name: {Lastname}-FinalProject-{ResourceType}
+- Engineer: {Lastname}-{Firstname}
+- ProjectCode: Terraform101-CloudIntern
 
 ## Getting Started
 Prerequisites
