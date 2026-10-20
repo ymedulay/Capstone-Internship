@@ -1,93 +1,118 @@
-# Dulay-Capstone
+Dulay-Capstone: AWS 3-Tier Architecture with Terraform
+
+Architecture Diagram
+
+Project Overview
+
+This repository contains the Terraform infrastructure code for a highly available, secure 3-tier AWS architecture. Developed as a final capstone project for the Cloud Engineering Internship, this project adheres to Infrastructure as Code (IaC) best practices, utilizing a modular design to provision networking, compute, and load balancing resources across two Availability Zones (AZ-A and AZ-B).
+
+The infrastructure is designed with strict perimeter security, enforcing least privilege access through carefully mapped Security Groups, and maintains a remote backend in Amazon S3 for state management to facilitate secure operations.
+
+Repository Structure
+
+├── bootstrap/            # Initial setup files 
+├── modules/              # Reusable Terraform child modules
+│   ├── compute/          # EC2 instances, ASGs, and Target Groups
+│   ├── load_balancer/    # Application (ALB) and Network (NLB) Load Balancers
+│   ├── security_groups/  # Dynamic SG generation mapping ingress/egress rules
+│   └── vpc/              # VPC, Subnets, NAT/Internet Gateways, Route Tables
+├── scripts/              # Initialization and user-data scripts for instances
+├── tests/                # Load and stress testing scripts (k6)
+├── .gitignore            # Git ignore configurations
+├── 01_main.tf            # Root module defining global variables and calling child modules
+├── 02_variables.tf       # Root variable definitions (identity, region, networking)
+├── 03_outputs.tf         # Exposed infrastructure outputs (IPs, DNS names)
+├── backend.tf            # Remote S3 state and locking configuration
+├── README.md             # Project documentation
+└── terraform.tfvars      # Environment-specific variable assignments
 
 
+Security & Networking
 
-## Getting started
+The network traffic is heavily regulated to prevent direct internet access to instances and to secure the administrative paths:
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+Bastion Host: Accessible only via SSH from the designated vpn_ip.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Application Load Balancer (ALB): The only public-facing entry point (HTTP/80) to the application.
 
-## Add your files
+Frontend ASG: Only accepts HTTP traffic that has passed through the ALB, and SSH traffic from the Bastion.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+Backend ASG: Isolated in private subnets. Only accepts HTTP traffic from the VPC CIDR (for internal NLB routing and health checks) and SSH traffic from the Bastion.
 
-```
-cd existing_repo
-git remote add origin https://gitlab.stratpoint.cloud/cloud-bootcamp/batch-2026/dulay-ylanna/dulay-capstone.git
-git branch -M main
-git push -uf origin main
-```
+Mandatory Tagging Standards
 
-## Integrate with your tools
+All resources deployed through this configuration are automatically tagged using local variables. The module automatically merges base tags with dynamically generated tags:
 
-- [ ] [Set up project integrations](https://gitlab.stratpoint.cloud/cloud-bootcamp/batch-2026/dulay-ylanna/dulay-capstone/-/settings/integrations)
+Name: {Lastname}-FinalProject-{ResourceType}
 
-## Collaborate with your team
+Engineer: {Lastname}-{Firstname}
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+ProjectCode: Terraform101-CloudIntern
 
-## Test and Deploy
+Getting Started
 
-Use the built-in continuous integration in GitLab.
+Prerequisites
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+Terraform v1.14.3 or higher.
 
-***
+AWS CLI configured with appropriate credentials.
 
-# Editing this README
+An existing S3 bucket (dulay-finalproject-terraform-state) initialized for remote state with versioning enabled.
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Configuration Setup
 
-## Suggestions for a good README
+Before initializing Terraform, create or update your terraform.tfvars file in the root directory. You must replace the placeholder VPN IP with your actual IP address to ensure secure SSH access to the Bastion Host.
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+Security Note: Never commit your actual VPN IP to version control.
 
-## Name
-Choose a self-explaining name for your project.
+region = "ap-southeast-1"
+vpn_ip = "YOUR_VPN_IP/32" # Replace with your actual IP address
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+common_tags = {
+  "ProjectCode" = "Terraform101-CloudIntern"
+}
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+Deployment Steps
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Initialize Terraform: Downloads providers and configures the S3 backend.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+terraform init
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Plan Infrastructure: Review the execution plan to verify resource creation and tagging.
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+terraform plan
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+Apply Configuration: Provision the resources in your AWS account.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+terraform apply
 
-## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Outputs
+
+Upon a successful terraform apply, the terminal will output the following essential connectivity details:
+
+bastion_public_ip: Your SSH entry point into the VPC.
+
+bastion_private_ip: Internal IP of the Bastion Host for internal network verification.
+
+frontend_alb_dns: The public URL to access the frontend application (primary target for testing).
+
+backend_nlb_dns: The internal DNS used for backend verification.
+
+frontend_ips: Actual Private IPs of Frontend ASG Instances.
+
+backend_ips: Actual Private IPs of Backend ASG Instances.
+
+Stress Testing
+
+This repository includes a k6 stress testing script to validate the Application Load Balancer and Auto Scaling Group policies.
+
+To run the test against the provisioned infrastructure, use the target URL exported by Terraform:
+
+k6 run -e TARGET_URL=http://$(terraform output -raw frontend_alb_dns) tests/stress_test.js
+
+
+The script will jump to 300 virtual users and hold for 3 minutes to verify that CloudWatch alarms trigger and scale the environment accordingly.
